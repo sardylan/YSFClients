@@ -18,7 +18,7 @@
 
 #include "YSFDefines.h"
 #include "Network.h"
-#include "Utils.h"
+#include "utils.hpp"
 
 #include <cstdio>
 #include <cassert>
@@ -55,7 +55,7 @@ bool CNetwork::writeData(const unsigned char* data, const in_addr& address, unsi
 	assert(data != NULL);
 
 	if (m_debug)
-		CUtils::dump(1U, "YSF Network Data Sent", data, 155U);
+		Utils::dump(1U, "YSF Network Data Sent", data, 155U);
 
 	return m_socket.write(data, 155U, address, port);
 }
@@ -81,14 +81,14 @@ bool CNetwork::writePoll(const in_addr& address, unsigned int port)
 	buffer[13U] = ' ';
 
 	if (m_debug)
-		CUtils::dump(1U, "YSF Network Poll Sent", buffer, 14U);
+		Utils::dump(1U, "YSF Network Poll Sent", buffer, 14U);
 
 	return m_socket.write(buffer, 14U, address, port);
 }
 
 unsigned int CNetwork::readData(unsigned char* data, unsigned int length, in_addr& address, unsigned int& port)
 {
-	assert(data != NULL);
+	assert(data != nullptr);
 	assert(length > 0U);
 
 	int len = m_socket.read(data, length, address, port);
@@ -102,7 +102,7 @@ unsigned int CNetwork::readData(unsigned char* data, unsigned int length, in_add
 	}
 
 	if (m_debug)
-		CUtils::dump(1U, "YSF Network Data Received", data, len);
+		Utils::dump(1U, "YSF Network Data Received", data, len);
 
 	return len;
 }

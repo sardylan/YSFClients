@@ -1,6 +1,7 @@
 add_executable(YSFReflector
         Version.h
         YSFDefines.h
+        ip_blacklist.cpp ip_blacklist.hpp
         Conf.cpp Conf.h
         Log.cpp Log.h
         Network.cpp Network.h
@@ -8,7 +9,7 @@ add_executable(YSFReflector
         Thread.cpp Thread.h
         Timer.cpp Timer.h
         UDPSocket.cpp UDPSocket.h
-        Utils.cpp Utils.h
+        utils.cpp utils.hpp
         YSFReflector.cpp YSFReflector.h)
 
 target_link_libraries(YSFReflector
