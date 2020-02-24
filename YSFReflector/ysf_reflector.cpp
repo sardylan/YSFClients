@@ -177,80 +177,84 @@ void YSFReflector::run(const std::string &iniFile) {
         unsigned int port;
 
         unsigned int len = network.readData(buffer, 200U, address, port);
-        if (len > 0U) {
-            YSFRepeater *rpt = findRepeater(address, port);
-            if (::memcmp(buffer, "YSFP", 4U) == 0) {
-                if (rpt == nullptr) {
-                    rpt = new YSFRepeater;
-                    rpt->m_callsign = std::string((char *) (buffer + 4U), 10U);
-                    rpt->m_address = address;
-                    rpt->m_port = port;
-                    ysfRepeaters.push_back(rpt);
+
+        std::string remoteAddress = std::string(inet_ntoa(address));
+
+        if (ipBlacklist->isAddressBlacklisted(remoteAddress))
+            if (len > 0U) {
+                YSFRepeater *rpt = findRepeater(address, port);
+                if (::memcmp(buffer, "YSFP", 4U) == 0) {
+                    if (rpt == nullptr) {
+                        rpt = new YSFRepeater;
+                        rpt->m_callsign = std::string((char *) (buffer + 4U), 10U);
+                        rpt->m_address = address;
+                        rpt->m_port = port;
+                        ysfRepeaters.push_back(rpt);
+                        network.setCount(ysfRepeaters.size());
+                        LogMessage("Adding %s (%s:%u)", rpt->m_callsign.c_str(), ::inet_ntoa(address), port);
+                    }
+                    rpt->m_timer.start();
+                    network.writePoll(address, port);
+                } else if (::memcmp(buffer + 0U, "YSFU", 4U) == 0 && rpt != nullptr) {
+                    LogMessage("Removing %s (%s:%u) unlinked", rpt->m_callsign.c_str(), ::inet_ntoa(address), port);
+                    for (auto it = ysfRepeaters.begin(); it != ysfRepeaters.end(); ++it) {
+                        YSFRepeater *itRpt = *it;
+                        if (itRpt->m_address.s_addr == rpt->m_address.s_addr && itRpt->m_port == rpt->m_port) {
+                            ysfRepeaters.erase(it);
+                            delete itRpt;
+                            break;
+                        }
+                    }
                     network.setCount(ysfRepeaters.size());
-                    LogMessage("Adding %s (%s:%u)", rpt->m_callsign.c_str(), ::inet_ntoa(address), port);
-                }
-                rpt->m_timer.start();
-                network.writePoll(address, port);
-            } else if (::memcmp(buffer + 0U, "YSFU", 4U) == 0 && rpt != nullptr) {
-                LogMessage("Removing %s (%s:%u) unlinked", rpt->m_callsign.c_str(), ::inet_ntoa(address), port);
-                for (auto it = ysfRepeaters.begin(); it != ysfRepeaters.end(); ++it) {
-                    YSFRepeater *itRpt = *it;
-                    if (itRpt->m_address.s_addr == rpt->m_address.s_addr && itRpt->m_port == rpt->m_port) {
-                        ysfRepeaters.erase(it);
-                        delete itRpt;
-                        break;
-                    }
-                }
-                network.setCount(ysfRepeaters.size());
-            } else if (::memcmp(buffer + 0U, "YSFD", 4U) == 0 && rpt != nullptr) {
-                if (!watchdogTimer.isRunning()) {
-                    ::memcpy(tag, buffer + 4U, YSF_CALLSIGN_LENGTH);
+                } else if (::memcmp(buffer + 0U, "YSFD", 4U) == 0 && rpt != nullptr) {
+                    if (!watchdogTimer.isRunning()) {
+                        ::memcpy(tag, buffer + 4U, YSF_CALLSIGN_LENGTH);
 
-                    if (::memcmp(buffer + 14U, "          ", YSF_CALLSIGN_LENGTH) != 0)
-                        ::memcpy(src, buffer + 14U, YSF_CALLSIGN_LENGTH);
-                    else
-                        ::memcpy(src, "??????????", YSF_CALLSIGN_LENGTH);
-
-                    if (::memcmp(buffer + 24U, "          ", YSF_CALLSIGN_LENGTH) != 0)
-                        ::memcpy(dst, buffer + 24U, YSF_CALLSIGN_LENGTH);
-                    else
-                        ::memcpy(dst, "??????????", YSF_CALLSIGN_LENGTH);
-
-                    LogMessage("Received data from %10.10s to %10.10s at %10.10s", src, dst, buffer + 4U);
-                } else {
-                    if (::memcmp(tag, buffer + 4U, YSF_CALLSIGN_LENGTH) == 0) {
-                        bool changed = false;
-
-                        if (::memcmp(buffer + 14U, "          ", YSF_CALLSIGN_LENGTH) != 0 &&
-                            ::memcmp(src, "??????????", YSF_CALLSIGN_LENGTH) == 0) {
+                        if (::memcmp(buffer + 14U, "          ", YSF_CALLSIGN_LENGTH) != 0)
                             ::memcpy(src, buffer + 14U, YSF_CALLSIGN_LENGTH);
-                            changed = true;
-                        }
+                        else
+                            ::memcpy(src, "??????????", YSF_CALLSIGN_LENGTH);
 
-                        if (::memcmp(buffer + 24U, "          ", YSF_CALLSIGN_LENGTH) != 0 &&
-                            ::memcmp(dst, "??????????", YSF_CALLSIGN_LENGTH) == 0) {
+                        if (::memcmp(buffer + 24U, "          ", YSF_CALLSIGN_LENGTH) != 0)
                             ::memcpy(dst, buffer + 24U, YSF_CALLSIGN_LENGTH);
-                            changed = true;
+                        else
+                            ::memcpy(dst, "??????????", YSF_CALLSIGN_LENGTH);
+
+                        LogMessage("Received data from %10.10s to %10.10s at %10.10s", src, dst, buffer + 4U);
+                    } else {
+                        if (::memcmp(tag, buffer + 4U, YSF_CALLSIGN_LENGTH) == 0) {
+                            bool changed = false;
+
+                            if (::memcmp(buffer + 14U, "          ", YSF_CALLSIGN_LENGTH) != 0 &&
+                                ::memcmp(src, "??????????", YSF_CALLSIGN_LENGTH) == 0) {
+                                ::memcpy(src, buffer + 14U, YSF_CALLSIGN_LENGTH);
+                                changed = true;
+                            }
+
+                            if (::memcmp(buffer + 24U, "          ", YSF_CALLSIGN_LENGTH) != 0 &&
+                                ::memcmp(dst, "??????????", YSF_CALLSIGN_LENGTH) == 0) {
+                                ::memcpy(dst, buffer + 24U, YSF_CALLSIGN_LENGTH);
+                                changed = true;
+                            }
+
+                            if (changed)
+                                LogMessage("Received data from %10.10s to %10.10s at %10.10s", src, dst, buffer + 4U);
                         }
-
-                        if (changed)
-                            LogMessage("Received data from %10.10s to %10.10s at %10.10s", src, dst, buffer + 4U);
                     }
-                }
 
-                watchdogTimer.start();
+                    watchdogTimer.start();
 
-                for (auto ysfRepeater : ysfRepeaters) {
-                    if (ysfRepeater->m_address.s_addr != address.s_addr || ysfRepeater->m_port != port)
-                        network.writeData(buffer, ysfRepeater->m_address, ysfRepeater->m_port);
-                }
+                    for (auto ysfRepeater : ysfRepeaters) {
+                        if (ysfRepeater->m_address.s_addr != address.s_addr || ysfRepeater->m_port != port)
+                            network.writeData(buffer, ysfRepeater->m_address, ysfRepeater->m_port);
+                    }
 
-                if ((buffer[34U] & 0x01U) == 0x01U) {
-                    LogMessage("Received end of transmission");
-                    watchdogTimer.stop();
+                    if ((buffer[34U] & 0x01U) == 0x01U) {
+                        LogMessage("Received end of transmission");
+                        watchdogTimer.stop();
+                    }
                 }
             }
-        }
 
         unsigned int ms = stopWatch.elapsed();
         stopWatch.start();
