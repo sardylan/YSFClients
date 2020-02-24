@@ -18,42 +18,33 @@
  *
  */
 
-#ifndef __YSF_REFLECTOR__IP_BLACKLIST__H
-#define __YSF_REFLECTOR__IP_BLACKLIST__H
+#ifndef __YSF_REFLECTOR__YFS_REPEATER__H
+#define __YSF_REFLECTOR__YFS_REPEATER__H
 
+#include <cstdio>
 #include <string>
-#include <mutex>
-#include <set>
+#include <vector>
+#include <netdb.h>
+#include <ctime>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-namespace ysf {
+#include "Timer.h"
+#include "configuration.hpp"
 
-    class IpBlacklist {
+class YSFRepeater {
 
-    public:
+public:
 
-        IpBlacklist();
+    YSFRepeater();
 
-        ~IpBlacklist();
-
-        bool addressAdd(const std::string &) const;
-
-        bool addressRemove(const std::string &) const;
-
-        bool isAddressBlacklisted(const std::string &) const;
-
-        std::size_t countBlacklistedAddresses() const;
-
-        bool loadFromFile(const std::string &);
-
-        bool saveToFile(const std::string &);
-
-    private:
-
-        std::set<std::string> *blacklistAddresses;
-
-        std::mutex *mutex;
-
-    };
+    std::string m_callsign;
+    in_addr m_address;
+    unsigned int m_port;
+    CTimer m_timer;
 };
 
 #endif

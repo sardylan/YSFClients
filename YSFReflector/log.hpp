@@ -1,6 +1,5 @@
 /*
  *   Copyright (C) 2015,2016 by Jonathan Naylor G4KLX
- *                 2020 by Luca Cireddu IS0GVH
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -15,45 +14,25 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
  */
 
-#ifndef __YSF_REFLECTOR__IP_BLACKLIST__H
-#define __YSF_REFLECTOR__IP_BLACKLIST__H
+#ifndef __YSF_REFLECTOR__LOG__H
+#define    __YSF_REFLECTOR__LOG__H
 
 #include <string>
-#include <mutex>
-#include <set>
 
-namespace ysf {
+#define LogDebug(fmt, ...)   Log(1U, fmt, ##__VA_ARGS__)
+#define LogMessage(fmt, ...) Log(2U, fmt, ##__VA_ARGS__)
+#define LogInfo(fmt, ...)    Log(3U, fmt, ##__VA_ARGS__)
+#define LogWarning(fmt, ...) Log(4U, fmt, ##__VA_ARGS__)
+#define LogError(fmt, ...)   Log(5U, fmt, ##__VA_ARGS__)
+#define LogFatal(fmt, ...)   Log(6U, fmt, ##__VA_ARGS__)
 
-    class IpBlacklist {
+extern void Log(unsigned int level, const char *fmt, ...);
 
-    public:
+extern bool LogInitialise(const std::string &filePath, const std::string &fileRoot, unsigned int fileLevel,
+                          unsigned int displayLevel);
 
-        IpBlacklist();
-
-        ~IpBlacklist();
-
-        bool addressAdd(const std::string &) const;
-
-        bool addressRemove(const std::string &) const;
-
-        bool isAddressBlacklisted(const std::string &) const;
-
-        std::size_t countBlacklistedAddresses() const;
-
-        bool loadFromFile(const std::string &);
-
-        bool saveToFile(const std::string &);
-
-    private:
-
-        std::set<std::string> *blacklistAddresses;
-
-        std::mutex *mutex;
-
-    };
-};
+extern void LogFinalise();
 
 #endif

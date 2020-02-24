@@ -12,7 +12,7 @@
  */
 
 #include "utils.hpp"
-#include "Log.h"
+#include "log.hpp"
 
 #include <cstdio>
 #include <cassert>

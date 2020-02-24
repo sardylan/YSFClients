@@ -17,7 +17,7 @@
  */
 
 #include "UDPSocket.h"
-#include "Log.h"
+#include "log.hpp"
 
 #include <cassert>
 

@@ -16,14 +16,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "Log.h"
-
-#if defined(_WIN32) || defined(_WIN64)
-#include <Windows.h>
-#else
-#include <sys/time.h>
-#endif
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
@@ -31,11 +23,21 @@
 #include <cassert>
 #include <cstring>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <Windows.h>
+#else
+
+#include <sys/time.h>
+
+#endif
+
+#include "log.hpp"
+
 static unsigned int m_fileLevel = 2U;
 static std::string m_filePath;
 static std::string m_fileRoot;
 
-static FILE* m_fpLog = NULL;
+static FILE *m_fpLog = nullptr;
 
 static unsigned int m_displayLevel = 2U;
 
@@ -43,21 +45,20 @@ static struct tm m_tm;
 
 static char LEVELS[] = " DMIWEF";
 
-static bool LogOpen()
-{
+static bool LogOpen() {
 	if (m_fileLevel == 0U)
 		return true;
 
 	time_t now;
 	::time(&now);
 
-	struct tm* tm = ::gmtime(&now);
+	struct tm *tm = ::gmtime(&now);
 
 	if (tm->tm_mday == m_tm.tm_mday && tm->tm_mon == m_tm.tm_mon && tm->tm_year == m_tm.tm_year) {
-		if (m_fpLog != NULL)
-		    return true;
+		if (m_fpLog != nullptr)
+			return true;
 	} else {
-		if (m_fpLog != NULL)
+		if (m_fpLog != nullptr)
 			::fclose(m_fpLog);
 	}
 
@@ -65,33 +66,32 @@ static bool LogOpen()
 #if defined(_WIN32) || defined(_WIN64)
 	::sprintf(filename, "%s\\%s-%04d-%02d-%02d.log", m_filePath.c_str(), m_fileRoot.c_str(), tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 #else
-	::sprintf(filename, "%s/%s-%04d-%02d-%02d.log", m_filePath.c_str(), m_fileRoot.c_str(), tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
+	::sprintf(filename, "%s/%s-%04d-%02d-%02d.log", m_filePath.c_str(), m_fileRoot.c_str(), tm->tm_year + 1900,
+			  tm->tm_mon + 1, tm->tm_mday);
 #endif
 
 	m_fpLog = ::fopen(filename, "a+t");
 	m_tm = *tm;
 
-    return m_fpLog != NULL;
+	return m_fpLog != nullptr;
 }
 
-bool LogInitialise(const std::string& filePath, const std::string& fileRoot, unsigned int fileLevel, unsigned int displayLevel)
-{
-	m_filePath     = filePath;
-	m_fileRoot     = fileRoot;
-	m_fileLevel    = fileLevel;
+bool LogInitialise(const std::string &filePath, const std::string &fileRoot, unsigned int fileLevel,
+				   unsigned int displayLevel) {
+	m_filePath = filePath;
+	m_fileRoot = fileRoot;
+	m_fileLevel = fileLevel;
 	m_displayLevel = displayLevel;
-    return ::LogOpen();
+	return ::LogOpen();
 }
 
-void LogFinalise()
-{
-    if (m_fpLog != NULL)
-        ::fclose(m_fpLog);
+void LogFinalise() {
+	if (m_fpLog != nullptr)
+		::fclose(m_fpLog);
 }
 
-void Log(unsigned int level, const char* fmt, ...)
-{
-    assert(fmt != NULL);
+void Log(unsigned int level, const char *fmt, ...) {
+	assert(fmt != nullptr);
 
 	char buffer[300U];
 #if defined(_WIN32) || defined(_WIN64)
@@ -101,11 +101,12 @@ void Log(unsigned int level, const char* fmt, ...)
 	::sprintf(buffer, "%c: %04u-%02u-%02u %02u:%02u:%02u.%03u ", LEVELS[level], st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 #else
 	struct timeval now;
-	::gettimeofday(&now, NULL);
+	::gettimeofday(&now, nullptr);
 
-	struct tm* tm = ::gmtime(&now.tv_sec);
+	struct tm *tm = ::gmtime(&now.tv_sec);
 
-	::sprintf(buffer, "%c: %04d-%02d-%02d %02d:%02d:%02d.%03lu ", LEVELS[level], tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec / 1000U);
+	::sprintf(buffer, "%c: %04d-%02d-%02d %02d:%02d:%02d.%03lu ", LEVELS[level], tm->tm_year + 1900, tm->tm_mon + 1,
+			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec / 1000U);
 #endif
 
 	va_list vl;
@@ -129,8 +130,8 @@ void Log(unsigned int level, const char* fmt, ...)
 		::fflush(stdout);
 	}
 
-	if (level == 6U) {		// Fatal
-        ::fclose(m_fpLog);
-        exit(1);
-    }
+	if (level == 6U) {        // Fatal
+		::fclose(m_fpLog);
+		exit(1);
+	}
 }

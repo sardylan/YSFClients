@@ -26,8 +26,6 @@
 
 using namespace ysf;
 
-IpBlacklist *IpBlacklist::instance = nullptr;
-
 IpBlacklist::IpBlacklist() {
     IpBlacklist::blacklistAddresses = new std::set<std::string>();
     IpBlacklist::mutex = new std::mutex();
@@ -36,13 +34,6 @@ IpBlacklist::IpBlacklist() {
 IpBlacklist::~IpBlacklist() {
     delete mutex;
     delete blacklistAddresses;
-}
-
-IpBlacklist *IpBlacklist::getInstance() {
-    if (IpBlacklist::instance == nullptr)
-        IpBlacklist::instance = new IpBlacklist();
-
-    return IpBlacklist::instance;
 }
 
 bool IpBlacklist::addressAdd(const std::string &value) const {
