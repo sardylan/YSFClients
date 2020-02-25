@@ -167,19 +167,25 @@ bool CliServer::parseCommand(char *buffer) {
     } while (arg != nullptr);
 
     if (std::strcmp(command, "BLACKLIST") == 0) {
-        if (args.size() < 2)
+        if (args.empty())
             return false;
 
-        std::string address = std::string(args[1]);
-
         if (std::strcmp(args[0], "ADD") == 0) {
+            if (args.size() < 2)
+                return false;
+            std::string address = std::string(args[1]);
             callback->blacklistAdd(address);
+            return true;
         } else if (std::strcmp(args[0], "REMOVE") == 0) {
+            if (args.size() < 2)
+                return false;
+            std::string address = std::string(args[1]);
             callback->blacklistRemove(address);
+            return true;
         } else {
             return false;
         }
     }
 
-    return true;
+    return false;
 }

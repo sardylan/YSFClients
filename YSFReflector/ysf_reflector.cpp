@@ -338,6 +338,7 @@ void YSFReflector::dumpRepeaters() const {
 
 void YSFReflector::blacklistAdd(std::string address) {
     ipBlacklist->addressAdd(address);
+    ipBlacklist->saveToFile(configuration->getNetworkBlacklistFile());
 
     size_t count = ipBlacklist->countBlacklistedAddresses();
     const char *address_str = address.c_str();
@@ -346,6 +347,7 @@ void YSFReflector::blacklistAdd(std::string address) {
 
 void YSFReflector::blacklistRemove(std::string address) {
     ipBlacklist->addressRemove(address);
+    ipBlacklist->saveToFile(configuration->getNetworkBlacklistFile());
 
     size_t count = ipBlacklist->countBlacklistedAddresses();
     const char *address_str = address.c_str();
